@@ -20,7 +20,7 @@ async def start_command(message: types.Message):
                            text='Welcome to our bot!',
                            reply_markup=kb)
 
-@dp.message_handler(commands=['vote']) # handler
+@dp.message_handler(commands=['vote']) # handler example
 async def vote_command(message: types.Message):
     ikb = InlineKeyboardMarkup(row_width=2)
     ib1 = InlineKeyboardButton(text='❤️',
