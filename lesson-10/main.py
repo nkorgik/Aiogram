@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 
-from config import TOKEN_API
+from first_project.config import TOKEN_API
 
 bot = Bot(TOKEN_API)
 dp = Dispatcher(bot)
