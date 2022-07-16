@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters import Text
 import random
 
 from config import TOKEN_API
-from keyboards import kb, kb_photo
+from keyboards import kb, kb_photo, ikb
 
 
 bot = Bot(token=TOKEN_API)  # создаём экземпляр бота, подключаясь к API
@@ -18,8 +18,18 @@ arr_photos = ["https://travel.home.sndimg.com/content/dam/images/travel/fullset/
               "https://i.ytimg.com/vi/u71QsZvObHs/maxresdefault.jpg",
               "https://images.unsplash.com/photo-1613967193490-1d17b930c1a1?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhdXRpZnVsJTIwbGFuZHNjYXBlfGVufDB8fDB8fA%3D%3D&w=1000&q=80"]
 
+photos = dict(zip(arr_photos, ['Lake', 'Waterfall', 'Shore']))
+
 async def on_startup(_):
     print('Я запустился!')
+
+
+async def send_random(message: types.Message):
+    random_photo = random.choice(list(photos.keys()))
+    await bot.send_photo(chat_id=message.chat.id,
+                         photo=random_photo,
+                         caption=photos[random_photo],
+                         reply_markup=ikb)
 
 
 @dp.message_handler(Text(equals="Random photo"))
@@ -31,8 +41,7 @@ async def open_kb_photo(message: types.Message):
 
 @dp.message_handler(Text(equals="Рандом"))
 async def send_random_photo(message: types.Message):
-    await bot.send_photo(chat_id=message.chat.id,
-                         photo=random.choice(arr_photos))
+    await send_random(message)
 
 
 @dp.message_handler(Text(equals="Главное меню"))
@@ -62,6 +71,19 @@ async def cmd_help(message: types.Message):
     await bot.send_sticker(chat_id=message.chat.id,
                            sticker="CAACAgQAAxkBAAEFSnRi0oSKdBsMkJrWq1Wb_gJe4bH8lgACzAADzjkIDd9nfGV-RLlkKQQ")
     await message.delete()
+
+
+@dp.callback_query_handler()
+async def callback_random_photo(callback: types.CallbackQuery):
+    if callback.data == 'like':
+        await callback.answer("Вам понравилось!")
+        # await callback.message.answer('Вам понравилось!')
+    elif callback.data == 'dislike':
+        await callback.answer("Вам не понравилось!")
+        # await callback.message.answer('Вам не понравилось!')
+    else:
+        await send_random(message=callback.message)
+        await callback.answer()
 
 
 if __name__ == "__main__":
