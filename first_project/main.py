@@ -1,6 +1,9 @@
+import aiogram.utils.exceptions
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import Text
+from aiogram.types import ReplyKeyboardRemove
 import random
+
 
 from config import TOKEN_API
 from keyboards import kb, kb_photo, ikb
@@ -19,12 +22,17 @@ arr_photos = ["https://travel.home.sndimg.com/content/dam/images/travel/fullset/
               "https://images.unsplash.com/photo-1613967193490-1d17b930c1a1?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhdXRpZnVsJTIwbGFuZHNjYXBlfGVufDB8fDB8fA%3D%3D&w=1000&q=80"]
 
 photos = dict(zip(arr_photos, ['Lake', 'Waterfall', 'Shore']))
+random_photo = random.choice(list(photos.keys()))
+
+flag = False
+
 
 async def on_startup(_):
     print('Я запустился!')
 
 
 async def send_random(message: types.Message):
+    global random_photo
     random_photo = random.choice(list(photos.keys()))
     await bot.send_photo(chat_id=message.chat.id,
                          photo=random_photo,
@@ -34,14 +42,10 @@ async def send_random(message: types.Message):
 
 @dp.message_handler(Text(equals="Random photo"))
 async def open_kb_photo(message: types.Message):
-    await message.answer(text='Чтобы отправить рандомную фотографию - нажми на кнопку "Рандом"',
-                         reply_markup=kb_photo)
-    await message.delete()
-
-
-@dp.message_handler(Text(equals="Рандом"))
-async def send_random_photo(message: types.Message):
+    await message.answer(text='Рандомная фотка!',
+                         reply_markup=ReplyKeyboardRemove())
     await send_random(message)
+    await message.delete()
 
 
 @dp.message_handler(Text(equals="Главное меню"))
@@ -73,16 +77,38 @@ async def cmd_help(message: types.Message):
     await message.delete()
 
 
+@dp.message_handler(commands=['location'])
+async def cmd_location(message: types.Message):
+    await bot.send_location(chat_id=message.chat.id,
+                            latitude=random.randint(0, 50),
+                            longitude=random.randint(0, 50))
+
+
 @dp.callback_query_handler()
 async def callback_random_photo(callback: types.CallbackQuery):
+    global random_photo  # ! нежелательно использование глобальных переменных
+    global flag
     if callback.data == 'like':
-        await callback.answer("Вам понравилось!")
+        if not flag:
+            await callback.answer("Вам понравилось!")
+            flag = not flag
+        else:
+            await callback.answer("Вы уже лайкнули!")
         # await callback.message.answer('Вам понравилось!')
     elif callback.data == 'dislike':
         await callback.answer("Вам не понравилось!")
         # await callback.message.answer('Вам не понравилось!')
+    elif callback.data == 'main':
+        await callback.message.answer(text='Добро пожаловать в главное меню!',
+                                      reply_markup=kb)
+        await callback.message.delete()
+        await callback.answer()
     else:
-        await send_random(message=callback.message)
+        random_photo = random.choice(list(filter(lambda x: x != random_photo, list(photos.keys()))))
+        await callback.message.edit_media(types.InputMedia(media=random_photo,
+                                                           type='photo',
+                                                           caption=photos[random_photo]),
+                                          reply_markup=ikb)
         await callback.answer()
 
 
