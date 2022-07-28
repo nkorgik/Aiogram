@@ -9,6 +9,12 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from config import TOKEN_API
+from sqlite import db_start, create_profile, edit_profile
+
+
+async def on_startup(_):
+    await db_start()
+
 
 storage = MemoryStorage()
 bot = Bot(TOKEN_API)
@@ -51,6 +57,8 @@ async def cmd_cancel(message: types.Message, state: FSMContext):
 async def cmd_start(message: types.Message) -> None:
     await message.answer('Welcome! So as to create profile - type /create',
                          reply_markup=get_kb())
+
+    await create_profile(user_id=message.from_user.id)
 
 
 @dp.message_handler(commands=['create'])
@@ -105,12 +113,14 @@ async def load_desc(message: types.Message, state: FSMContext) -> None:
                              photo=data['photo'],
                              caption=f"{data['name']}, {data['age']}\n{data['description']}")
 
+    await edit_profile(state, user_id=message.from_user.id)
     await message.reply('Ваша акнета успешно создана!')
     await state.finish()
 
 
 if __name__ == '__main__':
     executor.start_polling(dp,
-                           skip_updates=True)
+                           skip_updates=True,
+                           on_startup=on_startup)
 
 
