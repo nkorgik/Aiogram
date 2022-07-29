@@ -1,6 +1,6 @@
 from aiogram import Bot, executor, Dispatcher, types
 
-from config import TOKEN_API
+from projects.config import TOKEN_API
 from keyboards import kb, ikb
 
 bot = Bot(TOKEN_API)
