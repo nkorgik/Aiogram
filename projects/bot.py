@@ -1,3 +1,5 @@
+# cancel, list of all products
+
 from aiogram import types, executor, Dispatcher, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -31,6 +33,16 @@ async def cmd_start(message: types.Message):
                            reply_markup=get_start_kb())
 
 
+@dp.message_handler(commands=['cancel'], state='*')
+async def cmd_cancel(message: types.Message, state: FSMContext):
+    if state is None:
+        return
+
+    await state.finish()
+    await message.answer('Вы отменили действие!',
+                         reply_markup=get_start_kb())
+
+
 @dp.message_handler(commands=['products'])
 async def cmd_products(message: types.Message):
     await message.answer('Управление продуктами',
@@ -47,6 +59,7 @@ async def cb_get_all_products(callback: types.CallbackQuery):
         return await callback.answer()
 
     await callback.message.answer(products)
+    await callback.answer()
 
 
 @dp.callback_query_handler(text='add_new_product')
@@ -77,7 +90,9 @@ async def handle_photo(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         data['photo'] = message.photo[0].file_id
 
-    await message.reply('Спасибо, ваш продукт создан!')
+    await sqlite_db.create_new_product(state)
+    await message.reply('Спасибо, ваш продукт создан!',
+                        reply_markup=get_products_ikb())
 
     await state.finish()
 

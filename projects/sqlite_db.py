@@ -18,9 +18,10 @@ async def get_all_products():
     return products
 
 
-async def create_new_product(title, photo_id):
+async def create_new_product(state):
 
-    product = cur.execute("INSERT INTO product VALUES (?, ?)", (title, photo_id))
-    db.commit()
+    async with state.proxy() as data:
+        product = cur.execute("INSERT INTO product VALUES (?, ?)", (data['title'], data['photo']))
+        db.commit()
 
     return product
