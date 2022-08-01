@@ -1,4 +1,4 @@
-# cancel, list of all products
+# list of all products
 
 from aiogram import types, executor, Dispatcher, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -6,7 +6,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 from config import TOKEN_API
-from keyboards import get_products_ikb, products_cb, get_start_kb, get_cancel_kb
+from keyboards import get_products_ikb, get_start_kb, get_cancel_kb
 import sqlite_db
 
 bot = Bot(TOKEN_API)
@@ -24,6 +24,14 @@ class ProductStatesGroup(StatesGroup):
 async def on_startup(_):
     await sqlite_db.db_connect()
     print('Подключение к БД выполнено успешно')
+
+
+async def show_all_products(callback: types.CallbackQuery, products: list) -> None:
+    for product in products:
+        await bot.send_photo(chat_id=callback.message.chat.id,
+                             photo=product[2],
+                             caption=f'<b>{product[1]}</b> {product[0]}',
+                             parse_mode='HTML')
 
 
 @dp.message_handler(commands=['start'])
@@ -45,20 +53,22 @@ async def cmd_cancel(message: types.Message, state: FSMContext):
 
 @dp.message_handler(commands=['products'])
 async def cmd_products(message: types.Message):
+    await message.delete()
     await message.answer('Управление продуктами',
                          reply_markup=get_products_ikb())
 
 
 @dp.callback_query_handler(text='get_all_products')
 async def cb_get_all_products(callback: types.CallbackQuery):
-    products = await sqlite_db.get_all_products()
+    products = await sqlite_db.get_all_products()  #
 
     if not products:
         await callback.message.delete()
         await callback.message.answer('Вообще продуктов нет!')
         return await callback.answer()
 
-    await callback.message.answer(products)
+    await callback.message.delete()
+    await show_all_products(callback, products)
     await callback.answer()
 
 
@@ -95,6 +105,9 @@ async def handle_photo(message: types.Message, state: FSMContext) -> None:
                         reply_markup=get_products_ikb())
 
     await state.finish()
+
+
+
 
 
 if __name__ == '__main__':

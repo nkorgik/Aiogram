@@ -6,10 +6,19 @@ products_cb = CallbackData('product', 'id', 'action')
 def get_products_ikb() -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton('Просмотр всех продуктов', callback_data='get_all_products')],
-        [InlineKeyboardButton('Добавить новый продукт', callback_data='add_new_product')]
+        [InlineKeyboardButton('Добавить новый продукт', callback_data='add_new_product')],
     ])
 
     return ikb
+
+
+# def get_edit_product_ikb(product_id) -> InlineKeyboardMarkup:
+#     ikb = InlineKeyboardMarkup(inline_keyboard=[
+#         [InlineKeyboardButton('Редактировать продукт', callback_data=products_cb.new(product_id, 'edit'))],
+#         [InlineKeyboardButton('Удалить продукт', callback_data=products_cb.new(product_id, 'remove'))],
+#     ])
+#
+#     return ikb
 
 
 def get_start_kb() -> ReplyKeyboardMarkup:
