@@ -12,13 +12,13 @@ def get_products_ikb() -> InlineKeyboardMarkup:
     return ikb
 
 
-# def get_edit_product_ikb(product_id) -> InlineKeyboardMarkup:
-#     ikb = InlineKeyboardMarkup(inline_keyboard=[
-#         [InlineKeyboardButton('Редактировать продукт', callback_data=products_cb.new(product_id, 'edit'))],
-#         [InlineKeyboardButton('Удалить продукт', callback_data=products_cb.new(product_id, 'remove'))],
-#     ])
-#
-#     return ikb
+def get_edit_ikb(product_id: int) -> InlineKeyboardMarkup:
+    ikb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton('Редактировать продукт', callback_data=products_cb.new(product_id, 'edit'))],
+        [InlineKeyboardButton('Удалить продукт', callback_data=products_cb.new(product_id, 'delete'))],
+    ])
+
+    return ikb
 
 
 def get_start_kb() -> ReplyKeyboardMarkup:

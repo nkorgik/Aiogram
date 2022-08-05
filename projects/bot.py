@@ -6,7 +6,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 from config import TOKEN_API
-from keyboards import get_products_ikb, get_start_kb, get_cancel_kb
+from keyboards import *
 import sqlite_db
 
 bot = Bot(TOKEN_API)
@@ -20,6 +20,8 @@ class ProductStatesGroup(StatesGroup):
     title = State()
     photo = State()
 
+    new_title = State()
+
 
 async def on_startup(_):
     await sqlite_db.db_connect()
@@ -31,7 +33,8 @@ async def show_all_products(callback: types.CallbackQuery, products: list) -> No
         await bot.send_photo(chat_id=callback.message.chat.id,
                              photo=product[2],
                              caption=f'<b>{product[1]}</b> {product[0]}',
-                             parse_mode='HTML')
+                             parse_mode='HTML',
+                             reply_markup=get_edit_ikb(product[0]))
 
 
 @dp.message_handler(commands=['start'])
@@ -102,12 +105,39 @@ async def handle_photo(message: types.Message, state: FSMContext) -> None:
 
     await sqlite_db.create_new_product(state)
     await message.reply('Спасибо, ваш продукт создан!',
-                        reply_markup=get_products_ikb())
+                        reply_markup=get_start_kb())
 
     await state.finish()
 
 
+@dp.callback_query_handler(products_cb.filter(action='delete'))
+async def cb_delete_product(callback: types.CallbackQuery, callback_data: dict):
+    await sqlite_db.delete_product(callback_data['id'])
 
+    await callback.message.reply('Ваш продукт был успешно удалён!')
+    await callback.answer()
+
+
+@dp.callback_query_handler(products_cb.filter(action='edit'))
+async def cb_edit_product(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    await callback.message.answer('Отправь нам новое название продукта!',
+                                  reply_markup=get_cancel_kb())
+    await ProductStatesGroup.new_title.set()
+
+    async with state.proxy() as data:
+        data['product_id'] = callback_data['id']
+
+    await callback.answer()
+
+
+@dp.message_handler(state=ProductStatesGroup.new_title)
+async def load_new_title(message: types.Message, state: FSMContext) -> None:
+    async with state.proxy() as data:
+        await sqlite_db.edit_product(data['product_id'], message.text)
+
+    await message.reply('Новое название продукта установлено!',
+                        reply_markup=get_start_kb())
+    await state.finish()
 
 
 if __name__ == '__main__':
