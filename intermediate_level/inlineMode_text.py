@@ -19,7 +19,9 @@ async def cmd_start(message: types.Message) -> None:
 async def text_handler(message: types.Message) -> None:
     global user_data
     user_data = message.text
-    await message.reply('Ваши данные сохранены!')
+
+    if message.text.isdigit():
+        await message.reply('Ваши данные сохранены!')
 
 
 @dp.inline_handler()
